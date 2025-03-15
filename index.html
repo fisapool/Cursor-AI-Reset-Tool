@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Cursor Reset Tool</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header {
+      background-color: #2c3e50;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      border-radius: 5px 5px 0 0;
+    }
+    
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    
+    .content {
+      background: white;
+      padding: 20px;
+      border-radius: 0 0 5px 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .system-info {
+      background-color: #f9f9f9;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    
+    .system-info table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .system-info td {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .system-info td:first-child {
+      font-weight: bold;
+      width: 40%;
+    }
+    
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    .action-card {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+    }
+    
+    .action-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .action-card h3 {
+      margin-top: 0;
+      color: #2c3e50;
+    }
+    
+    .action-card p {
+      color: #666;
+      margin-bottom: 15px;
+    }
+    
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      font-size: 14px;
+    }
+    
+    button:hover {
+      background-color: #2980b9;
+    }
+    
+    button.danger {
+      background-color: #e74c3c;
+    }
+    
+    button.danger:hover {
+      background-color: #c0392b;
+    }
+    
+    button.success {
+      background-color: #2ecc71;
+    }
+    
+    button.success:hover {
+      background-color: #27ae60;
+    }
+    
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    
+    .status.success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    
+    .status.error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    
+    .status.loading {
+      background-color: #cce5ff;
+      color: #004085;
+    }
+    
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Cursor AI Reset Tool</h1>
+    </header>
+    
+    <div class="content">
+      <div class="system-info">
+        <h2>System Information</h2>
+        <div id="system-check-loader" class="loader"></div>
+        <div id="system-info-content" class="hidden">
+          <table>
+            <tr>
+              <td>Platform</td>
+              <td id="platform">Checking...</td>
+            </tr>
+            <tr>
+              <td>Architecture</td>
+              <td id="architecture">Checking...</td>
+            </tr>
+            <tr>
+              <td>RAM</td>
+              <td id="ram">Checking...</td>
+            </tr>
+            <tr>
+              <td>Free Disk Space</td>
+              <td id="disk">Checking...</td>
+            </tr>
+            <tr>
+              <td>Status</td>
+              <td id="system-status">Checking...</td>
+            </tr>
+          </table>
+          <button id="refresh-check" class="success">Refresh Check</button>
+        </div>
+      </div>
+      
+      <div class="actions">
+        <div class="action-card">
+          <h3>Complete Reset</h3>
+          <p>Performs a full reset of Cursor AI including uninstallation, reinstallation, and identity reset.</p>
+          <button id="full-reset">Reset Cursor AI</button>
+        </div>
+        
+        <div class="action-card">
+          <h3>Reset Identity Only</h3>
+          <p>Resets only the Cursor AI identity without reinstallation. This refreshes the trial period.</p>
+          <button id="reset-id">Reset Identity</button>
+        </div>
+        
+        <div class="action-card">
+          <h3>Install Cursor AI</h3>
+          <p>Downloads and installs Cursor AI v0.44.11 without modifying existing installations.</p>
+          <button id="install">Install</button>
+        </div>
+        
+        <div class="action-card">
+          <h3>Uninstall Cursor AI</h3>
+          <p>Completely removes Cursor AI from your system, including all preferences and files.</p>
+          <button id="uninstall" class="danger">Uninstall</button>
+        </div>
+      </div>
+      
+      <div id="status-message" class="status hidden"></div>
+    </div>
+  </div>
+  
+  <script>
+    const { ipcRenderer } = require('electron');
+    
+    // DOM elements
+    const systemCheckLoader = document.getElementById('system-check-loader');
+    const systemInfoContent = document.getElementById('system-info-content');
+    const platformElement = document.getElementById('platform');
+    const architectureElement = document.getElementById('architecture');
+    const ramElement = document.getElementById('ram');
+    const diskElement = document.getElementById('disk');
+    const systemStatusElement = document.getElementById('system-status');
+    const refreshCheckButton = document.getElementById('refresh-check');
+    const fullResetButton = document.getElementById('full-reset');
+    const resetIdButton = document.getElementById('reset-id');
+    const installButton = document.getElementById('install');
+    const uninstallButton = document.getElementById('uninstall');
+    const statusMessage = document.getElementById('status-message');
+    
+    // Helper functions
+    function showLoading(message) {
+      statusMessage.innerHTML = `<div class="loader"></div> ${message}`;
+      statusMessage.className = 'status loading';
+      statusMessage.classList.remove('hidden');
+    }
+    
+    function showSuccess(message) {
+      statusMessage.textContent = message;
+      statusMessage.className = 'status success';
+      statusMessage.classList.remove('hidden');
+    }
+    
+    function showError(message) {
+      statusMessage.textContent = message;
+      statusMessage.className = 'status error';
+      statusMessage.classList.remove('hidden');
+    }
+    
+    // Check system requirements
+    async function checkSystem() {
+      try {
+        systemCheckLoader.classList.remove('hidden');
+        systemInfoContent.classList.add('hidden');
+        
+        const systemInfo = await ipcRenderer.invoke('check-system');
+        
+        platformElement.textContent = systemInfo.platformName;
+        architectureElement.textContent = systemInfo.arch;
+        
+        if (systemInfo.totalMemoryGB) {
+          ramElement.textContent = `${systemInfo.totalMemoryGB} GB`;
+        }
+        
+        if (systemInfo.freeSpaceGB) {
+          diskElement.textContent = `${systemInfo.freeSpaceGB} GB Free`;
+        }
+        
+        if (systemInfo.passed) {
+          systemStatusElement.textContent = '✅ All requirements met';
+          systemStatusElement.style.color = '#27ae60';
+        } else {
+          systemStatusElement.textContent = `❌ ${systemInfo.error || 'Failed to meet requirements'}`;
+          systemStatusElement.style.color = '#e74c3c';
+        }
+        
+        systemCheckLoader.classList.add('hidden');
+        systemInfoContent.classList.remove('hidden');
+      } catch (error) {
+        showError(`Error checking system: ${error.message}`);
+        systemCheckLoader.classList.add('hidden');
+        systemInfoContent.classList.remove('hidden');
+      }
+    }
+    
+    // Event listeners
+    refreshCheckButton.addEventListener('click', checkSystem);
+    
+    fullResetButton.addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to perform a complete reset of Cursor AI? This will uninstall and reinstall Cursor AI.')) {
+        return;
+      }
+      
+      showLoading('Performing complete reset of Cursor AI...');
+      
+      try {
+        const result = await ipcRenderer.invoke('full-reset');
+        
+        if (result.success) {
+          showSuccess('Cursor AI has been successfully reset!');
+        } else {
+          showError(`Reset failed: ${result.error}`);
+        }
+      } catch (error) {
+        showError(`Error during reset: ${error.message}`);
+      }
+    });
+    
+    resetIdButton.addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to reset Cursor AI identity?')) {
+        return;
+      }
+      
+      showLoading('Resetting Cursor AI identity...');
+      
+      try {
+        const result = await ipcRenderer.invoke('reset-id');
+        
+        if (result.success) {
+          showSuccess('Cursor AI identity has been successfully reset!');
+        } else {
+          showError(`Reset failed: ${result.error}`);
+        }
+      } catch (error) {
+        showError(`Error during identity reset: ${error.message}`);
+      }
+    });
+    
+    installButton.addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to install Cursor AI?')) {
+        return;
+      }
+      
+      showLoading('Installing Cursor AI...');
+      
+      try {
+        const result = await ipcRenderer.invoke('install-cursor');
+        
+        if (result.success) {
+          showSuccess('Cursor AI has been successfully installed!');
+        } else {
+          showError(`Installation failed: ${result.error}`);
+        }
+      } catch (error) {
+        showError(`Error during installation: ${error.message}`);
+      }
+    });
+    
+    uninstallButton.addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to uninstall Cursor AI? This will remove all Cursor AI files from your system.')) {
+        return;
+      }
+      
+      showLoading('Uninstalling Cursor AI...');
+      
+      try {
+        const result = await ipcRenderer.invoke('uninstall-cursor');
+        
+        if (result.success) {
+          showSuccess('Cursor AI has been successfully uninstalled!');
+        } else {
+          showError(`Uninstallation failed: ${result.error}`);
+        }
+      } catch (error) {
+        showError(`Error during uninstallation: ${error.message}`);
+      }
+    });
+    
+    // Check system on load
+    document.addEventListener('DOMContentLoaded', checkSystem);
+  </script>
+</body>
+</html> 
