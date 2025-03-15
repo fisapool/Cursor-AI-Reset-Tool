@@ -8,6 +8,7 @@
     "build": "electron-builder",
     "build:mac": "electron-builder --mac",
     "build:win": "electron-builder --win",
+    "publish": "electron-builder -p always",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -24,7 +25,10 @@
     "productName": "Cursor Reset App",
     "mac": {
       "category": "public.app-category.developer-tools",
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "darkModeSupport": true,
       "icon": "assets/icons/icon.icns",
       "hardenedRuntime": true
@@ -48,7 +52,10 @@
       }
     },
     "win": {
-      "target": ["nsis", "portable"],
+      "target": [
+        "nsis",
+        "portable"
+      ],
       "icon": "assets/icons/icon.ico",
       "publisherName": "FISAMY",
       "artifactName": "${productName}-Setup-${version}.${ext}"
@@ -64,12 +71,37 @@
     },
     "portable": {
       "artifactName": "${productName}-Portable-${version}.${ext}"
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "fisapool",
+        "repo": "Cursor-AI-Reset-Tool",
+        "releaseType": "release"
+      }
+    ],
+    "directories": {
+      "buildResources": "assets",
+      "output": "dist"
+    },
+    "files": [
+      "assets/**/*",
+      "node_modules/**/*",
+      "*.js",
+      "*.html",
+      "*.css",
+      "*.json"
+    ],
+    "afterSign": "scripts/notarize.js"
   },
   "dependencies": {
-    "cursor-reset-tool": "^1.0.2"
+    "@electron/remote": "^2.1.2",
+    "cursor-reset-tool": "^1.0.2",
+    "electron-log": "^5.1.0",
+    "electron-updater": "^6.2.0"
   },
   "devDependencies": {
+    "@electron/notarize": "^3.0.0",
     "electron": "^35.0.1",
     "electron-builder": "^25.1.8"
   }

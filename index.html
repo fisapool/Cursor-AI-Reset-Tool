@@ -142,6 +142,11 @@
       color: #004085;
     }
     
+    .status.update {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    
     .loader {
       border: 4px solid #f3f3f3;
       border-top: 4px solid #3498db;
@@ -162,6 +167,40 @@
     .hidden {
       display: none;
     }
+    
+    .update-container {
+      background-color: #fff3cd;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    
+    .update-container.visible {
+      display: block;
+    }
+    
+    .update-progress {
+      height: 10px;
+      background-color: #f1f1f1;
+      border-radius: 5px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+    
+    .update-progress-bar {
+      height: 100%;
+      background-color: #4CAF50;
+      width: 0%;
+      transition: width 0.3s;
+    }
+    
+    .version-info {
+      text-align: right;
+      font-size: 12px;
+      color: #888;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -171,6 +210,15 @@
     </header>
     
     <div class="content">
+      <div id="update-container" class="update-container">
+        <h3 id="update-title">Update Available</h3>
+        <p id="update-message">A new version of Cursor Reset Tool is available.</p>
+        <div id="update-progress" class="update-progress">
+          <div id="update-progress-bar" class="update-progress-bar"></div>
+        </div>
+        <button id="update-action" class="success">Download Update</button>
+      </div>
+      
       <div class="system-info">
         <h2>System Information</h2>
         <div id="system-check-loader" class="loader"></div>
@@ -228,11 +276,16 @@
       </div>
       
       <div id="status-message" class="status hidden"></div>
+      
+      <div class="version-info">
+        <p>Version <span id="app-version">1.0.0</span> | <a href="#" id="check-updates">Check for Updates</a></p>
+      </div>
     </div>
   </div>
   
   <script>
     const { ipcRenderer } = require('electron');
+    const { app } = require('@electron/remote');
     
     // DOM elements
     const systemCheckLoader = document.getElementById('system-check-loader');
@@ -248,6 +301,23 @@
     const installButton = document.getElementById('install');
     const uninstallButton = document.getElementById('uninstall');
     const statusMessage = document.getElementById('status-message');
+    const appVersionElement = document.getElementById('app-version');
+    const checkUpdatesLink = document.getElementById('check-updates');
+    
+    // Update UI elements
+    const updateContainer = document.getElementById('update-container');
+    const updateTitle = document.getElementById('update-title');
+    const updateMessage = document.getElementById('update-message');
+    const updateProgressBar = document.getElementById('update-progress-bar');
+    const updateAction = document.getElementById('update-action');
+    
+    // Get app version
+    try {
+      const packageInfo = require('./package.json');
+      appVersionElement.textContent = packageInfo.version;
+    } catch (err) {
+      console.error('Could not read package.json:', err);
+    }
     
     // Helper functions
     function showLoading(message) {
@@ -267,6 +337,85 @@
       statusMessage.className = 'status error';
       statusMessage.classList.remove('hidden');
     }
+    
+    // Update notification handlers
+    ipcRenderer.on('update-status', (event, status, data) => {
+      console.log('Update status:', status, data);
+      
+      switch (status) {
+        case 'checking':
+          updateTitle.textContent = 'Checking for Updates...';
+          updateMessage.textContent = 'Please wait while we check for updates.';
+          updateContainer.className = 'update-container visible';
+          updateAction.style.display = 'none';
+          updateProgressBar.style.width = '0%';
+          break;
+          
+        case 'available':
+          updateTitle.textContent = 'Update Available!';
+          updateMessage.textContent = `Version ${data.version} is available. Current version: ${appVersionElement.textContent}`;
+          updateContainer.className = 'update-container visible';
+          updateAction.style.display = 'inline-block';
+          updateAction.textContent = 'Download Update';
+          updateAction.onclick = () => {
+            // Auto-download is enabled, so this is just for UI feedback
+            updateTitle.textContent = 'Downloading Update...';
+            updateMessage.textContent = 'The update is being downloaded automatically.';
+            updateAction.style.display = 'none';
+          };
+          break;
+          
+        case 'not-available':
+          updateContainer.className = 'update-container';
+          showSuccess('You are using the latest version!');
+          setTimeout(() => {
+            statusMessage.classList.add('hidden');
+          }, 3000);
+          break;
+          
+        case 'error':
+          updateContainer.className = 'update-container';
+          showError(`Update error: ${data}`);
+          break;
+          
+        case 'progress':
+          updateTitle.textContent = 'Downloading Update...';
+          updateMessage.textContent = `Downloaded ${Math.round(data.percent)}%`;
+          updateProgressBar.style.width = `${Math.round(data.percent)}%`;
+          break;
+          
+        case 'downloaded':
+          updateTitle.textContent = 'Update Ready!';
+          updateMessage.textContent = 'Update has been downloaded and is ready to install.';
+          updateAction.textContent = 'Restart & Install';
+          updateAction.style.display = 'inline-block';
+          updateAction.onclick = () => {
+            ipcRenderer.send('restart-app');
+          };
+          break;
+      }
+    });
+    
+    // Check for updates
+    checkUpdatesLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      
+      try {
+        showLoading('Checking for updates...');
+        const result = await ipcRenderer.invoke('check-for-updates');
+        
+        if (result.status === 'dev-mode') {
+          showSuccess('Update checking is disabled in development mode.');
+        } else if (result.status === 'error') {
+          showError(`Failed to check for updates: ${result.message}`);
+        } else {
+          // The response will come through the update-status event
+          statusMessage.classList.add('hidden');
+        }
+      } catch (error) {
+        showError(`Error checking for updates: ${error.message}`);
+      }
+    });
     
     // Check system requirements
     async function checkSystem() {
@@ -387,8 +536,14 @@
       }
     });
     
-    // Check system on load
-    document.addEventListener('DOMContentLoaded', checkSystem);
+    // Initialize the app
+    document.addEventListener('DOMContentLoaded', () => {
+      checkSystem();
+      // Check for updates automatically
+      setTimeout(() => {
+        checkUpdatesLink.click();
+      }, 3000);
+    });
   </script>
 </body>
 </html> 

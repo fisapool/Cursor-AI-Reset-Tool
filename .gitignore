@@ -4,6 +4,16 @@ node_modules/
 # Build output
 dist/
 out/
+*.dmg
+*.exe
+*.AppImage
+*.deb
+*.rpm
+*.msi
+*.snap
+*.blockmap
+*.yml
+!.github/**/*.yml
 
 # macOS files
 .DS_Store
@@ -33,4 +43,11 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
-*.sw? 
+*.sw?
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production 
